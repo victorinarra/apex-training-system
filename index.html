@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0D0D0D">
+<meta name="description" content="APEX Training System — HIIT e Tabata interval timer">
+<title>APEX Training System — Interval Timer</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<header class="topbar">
+  <div class="brand">
+    <div class="wolf-mark" aria-hidden="true">▲</div>
+    <div><strong>APEX</strong><span>TRAINING SYSTEM</span></div>
+  </div>
+  <button id="soundBtn" class="icon-btn" aria-label="Alternar som">🔊</button>
+</header>
+
+<main class="shell">
+  <section id="setupView" class="view active">
+    <div class="hero">
+      <p class="eyebrow">INTERVAL TRAINING</p>
+      <h1>Treine no seu<br><em>máximo.</em></h1>
+      <p class="sub">Configure seu protocolo e deixe o APEX controlar cada segundo.</p>
+    </div>
+
+    <form id="setupForm" class="panel">
+      <div class="field-grid">
+        <label>Preparação <input id="prep" type="number" min="0" max="600" value="10"><small>segundos</small></label>
+        <label>Exercício <input id="work" type="number" min="1" max="3600" value="20"><small>segundos</small></label>
+        <label>Descanso <input id="rest" type="number" min="0" max="3600" value="10"><small>segundos</small></label>
+        <label>Séries <input id="sets" type="number" min="1" max="99" value="4"><small>sets</small></label>
+        <label>Ciclos <input id="cycles" type="number" min="1" max="99" value="1"><small>ciclos</small></label>
+      </div>
+      <div class="summary"><span>Tempo total estimado</span><strong id="estimate">02:00</strong></div>
+      <button class="primary" type="submit">INICIAR TREINO <span>→</span></button>
+    </form>
+  </section>
+
+  <section id="timerView" class="view timer-view">
+    <div class="timer-head">
+      <button id="backBtn" class="ghost">← Configuração</button>
+      <span id="cycleLabel">CICLO 1/1</span>
+    </div>
+    <div id="timerCard" class="timer-card prep-state">
+      <p id="phase" class="phase">PREPARAÇÃO</p>
+      <div id="time" class="time">00:10</div>
+      <div class="progress"><i id="progressBar"></i></div>
+      <p id="setLabel" class="set-label">SET 1/4</p>
+    </div>
+    <div class="timer-actions">
+      <button id="restartBtn" class="secondary">↻</button>
+      <button id="pauseBtn" class="primary big">PAUSAR</button>
+      <button id="skipBtn" class="secondary">→|</button>
+    </div>
+    <p class="tip">Mantenha a execução sob controle. O sinal sonoro marca cada transição.</p>
+  </section>
+</main>
+<script src="app.js"></script>
+</body>
+</html>
