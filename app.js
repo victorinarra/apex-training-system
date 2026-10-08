@@ -8,7 +8,7 @@ let paused = false;
 let timer = null;
 let sound = true;
 let wakeLock = null;
-let phaseEndAt = 0;
+let phaseDeadline = 0;
 let pausedRemainingMs = 0;
 let lastBeepSecond = null;
 
@@ -28,8 +28,8 @@ function val(id) {
   return Math.max(0, parseInt($(id).value, 10) || 0);
 }
 
-function fmt(s) {
-  s = Math.max(0, Math.ceil(s));
+function fmt(seconds) {
+  const s = Math.max(0, Math.ceil(seconds));
   return String(Math.floor(s / 60)).padStart(2, "0") + ":" +
     String(s % 60).padStart(2, "0");
 }
@@ -54,16 +54,20 @@ updateEstimate();
 
 function beep(freq = 700, duration = 0.08) {
   if (!sound) return;
+
   try {
     const AudioCtx = window.AudioContext || window.webkitAudioContext;
     if (!AudioCtx) return;
+
     const ctx = new AudioCtx();
     const osc = ctx.createOscillator();
     const gain = ctx.createGain();
+
     osc.frequency.value = freq;
     osc.connect(gain);
     gain.connect(ctx.destination);
     gain.gain.setValueAtTime(0.05, ctx.currentTime);
+
     osc.start();
     osc.stop(ctx.currentTime + duration);
   } catch (e) {}
@@ -159,6 +163,7 @@ async function releaseWakeLock() {
   try {
     if (wakeLock) await wakeLock.release();
   } catch (e) {}
+
   wakeLock = null;
 }
 
@@ -182,7 +187,7 @@ function enterPhase(initial = false) {
 
   remaining = p.sec;
   pausedRemainingMs = p.sec * 1000;
-  phaseEndAt = performance.now() + pausedRemainingMs;
+  phaseDeadline = Date.now() + pausedRemainingMs;
   lastBeepSecond = null;
 
   if (!initial) {
@@ -195,13 +200,12 @@ function enterPhase(initial = false) {
 function tick() {
   if (paused || !phases[idx]) return;
 
-  const now = performance.now();
-  const msLeft = Math.max(0, phaseEndAt - now);
-
-  remaining = Math.ceil(msLeft / 1000);
-  render();
+  const msLeft = Math.max(0, phaseDeadline - Date.now());
 
   if (msLeft <= 0) {
+    remaining = 0;
+    render();
+
     idx++;
 
     if (phases[idx]) {
@@ -209,10 +213,18 @@ function tick() {
     } else {
       finish();
     }
+
     return;
   }
 
-  if (remaining <= 3 && remaining >= 1 && remaining !== lastBeepSecond) {
+  remaining = Math.ceil(msLeft / 1000);
+  render();
+
+  if (
+    remaining <= 3 &&
+    remaining >= 1 &&
+    remaining !== lastBeepSecond
+  ) {
     lastBeepSecond = remaining;
     beep(1000, 0.05);
   }
@@ -271,7 +283,7 @@ pauseBtn.addEventListener("click", () => {
   if (!phases.length || idx >= phases.length) return;
 
   if (!paused) {
-    pausedRemainingMs = Math.max(0, phaseEndAt - performance.now());
+    pausedRemainingMs = Math.max(0, phaseDeadline - Date.now());
     remaining = Math.ceil(pausedRemainingMs / 1000);
     paused = true;
 
@@ -283,8 +295,9 @@ pauseBtn.addEventListener("click", () => {
   }
 
   paused = false;
-  phaseEndAt = performance.now() + pausedRemainingMs;
+  phaseDeadline = Date.now() + pausedRemainingMs;
   lastBeepSecond = null;
+
   start();
   beep(800, 0.07);
 });
@@ -324,7 +337,7 @@ $("#backBtn").addEventListener("click", () => {
   phases = [];
   idx = 0;
   paused = false;
-  phaseEndAt = 0;
+  phaseDeadline = 0;
   pausedRemainingMs = 0;
 });
 
