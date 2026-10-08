@@ -42,7 +42,10 @@
   <section id="timerView" class="view timer-view">
     <div class="timer-head">
       <button id="backBtn" class="ghost">← Configuração</button>
-      <span id="cycleLabel">CICLO 1/1</span>
+      <div class="timer-meta">
+        <span id="cycleLabel">CICLO 1/1</span>
+        <span id="nextPhase" class="next-phase">PRÓXIMO — EXERCÍCIO</span>
+      </div>
     </div>
     <div id="timerCard" class="timer-card prep-state">
       <p id="phase" class="phase">PREPARAÇÃO</p>
@@ -56,6 +59,7 @@
       <button id="skipBtn" class="secondary">→|</button>
     </div>
     <p class="tip">Mantenha a execução sob controle. O sinal sonoro marca cada transição.</p>
+    <div class="screen-hint" id="wakeHint">TELA ATIVA DURANTE O TREINO</div>
   </section>
 </main>
 <script src="app.js"></script>
