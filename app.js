@@ -1,3 +1,5 @@
+import { buildPhases, calculateTotal } from "./timer-domain.js";
+
 const $ = (s) => document.querySelector(s);
 
 let cfg = {};
@@ -34,17 +36,14 @@ function fmt(seconds) {
     String(s % 60).padStart(2, "0");
 }
 
-function calcTotal() {
-  const prep = val("#prep");
-  const work = val("#work");
-  const rest = val("#rest");
-  const sets = Math.max(1, val("#sets"));
-  const cycles = Math.max(1, val("#cycles"));
-  return (prep + (work * sets) + (rest * Math.max(0, sets - 1))) * cycles;
-}
-
 function updateEstimate() {
-  estimate.textContent = fmt(calcTotal());
+  estimate.textContent = fmt(calculateTotal({
+    prep: val("#prep"),
+    work: val("#work"),
+    rest: val("#rest"),
+    sets: Math.max(1, val("#sets")),
+    cycles: Math.max(1, val("#cycles"))
+  }));
 }
 
 ["#prep", "#work", "#rest", "#sets", "#cycles"].forEach((id) => {
@@ -71,42 +70,6 @@ function beep(freq = 700, duration = 0.08) {
     osc.start();
     osc.stop(ctx.currentTime + duration);
   } catch (e) {}
-}
-
-function build() {
-  phases = [];
-
-  for (let c = 1; c <= cfg.cycles; c++) {
-    if (cfg.prep && c === 1) {
-      phases.push({
-        name: "PREPARAÇÃO",
-        sec: cfg.prep,
-        type: "prep",
-        cycle: c,
-        set: 1
-      });
-    }
-
-    for (let s = 1; s <= cfg.sets; s++) {
-      phases.push({
-        name: "EXERCÍCIO",
-        sec: cfg.work,
-        type: "work",
-        cycle: c,
-        set: s
-      });
-
-      if (s < cfg.sets && cfg.rest) {
-        phases.push({
-          name: "DESCANSO",
-          sec: cfg.rest,
-          type: "rest",
-          cycle: c,
-          set: s
-        });
-      }
-    }
-  }
 }
 
 function nextLabel() {
@@ -266,7 +229,7 @@ $("#setupForm").addEventListener("submit", (e) => {
     cycles: Math.max(1, val("#cycles"))
   };
 
-  build();
+  phases = buildPhases(cfg);
 
   if (!phases.length) return;
 
