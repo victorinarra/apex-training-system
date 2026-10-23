@@ -1,3 +1,5 @@
+import { advanceExpiredPhases, buildPhases, calculateTotal } from "./timer-domain.js";
+
 const $ = (s) => document.querySelector(s);
 
 let cfg = {};
@@ -34,17 +36,16 @@ function fmt(seconds) {
     String(s % 60).padStart(2, "0");
 }
 
-function calcTotal() {
-  const prep = val("#prep");
-  const work = val("#work");
-  const rest = val("#rest");
-  const sets = Math.max(1, val("#sets"));
-  const cycles = Math.max(1, val("#cycles"));
-  return (prep + (work * sets) + (rest * Math.max(0, sets - 1))) * cycles;
-}
+
 
 function updateEstimate() {
-  estimate.textContent = fmt(calcTotal());
+  estimate.textContent = fmt(calculateTotal({
+    prep: val("#prep"),
+    work: val("#work"),
+    rest: val("#rest"),
+    sets: Math.max(1, val("#sets")),
+    cycles: Math.max(1, val("#cycles"))
+  }));
 }
 
 ["#prep", "#work", "#rest", "#sets", "#cycles"].forEach((id) => {
@@ -74,39 +75,7 @@ function beep(freq = 700, duration = 0.08) {
 }
 
 function build() {
-  phases = [];
-
-  for (let c = 1; c <= cfg.cycles; c++) {
-    if (cfg.prep && c === 1) {
-      phases.push({
-        name: "PREPARAÇÃO",
-        sec: cfg.prep,
-        type: "prep",
-        cycle: c,
-        set: 1
-      });
-    }
-
-    for (let s = 1; s <= cfg.sets; s++) {
-      phases.push({
-        name: "EXERCÍCIO",
-        sec: cfg.work,
-        type: "work",
-        cycle: c,
-        set: s
-      });
-
-      if (s < cfg.sets && cfg.rest) {
-        phases.push({
-          name: "DESCANSO",
-          sec: cfg.rest,
-          type: "rest",
-          cycle: c,
-          set: s
-        });
-      }
-    }
-  }
+  phases = buildPhases(cfg);
 }
 
 function nextLabel() {
@@ -173,7 +142,8 @@ document.addEventListener("visibilitychange", () => {
     !paused &&
     timerView.classList.contains("active")
   ) {
-    requestWakeLock();
+    tick();
+    if (phases[idx] && !paused) requestWakeLock();
   }
 });
 
@@ -200,24 +170,26 @@ function enterPhase(initial = false) {
 function tick() {
   if (paused || !phases[idx]) return;
 
-  const msLeft = Math.max(0, phaseDeadline - Date.now());
+  const now = Date.now();
+  const previousIdx = idx;
+  const progress = advanceExpiredPhases(phases, idx, phaseDeadline, now);
 
-  if (msLeft <= 0) {
-    remaining = 0;
-    render();
+  idx = progress.index;
+  phaseDeadline = progress.deadline;
 
-    idx++;
-
-    if (phases[idx]) {
-      enterPhase(false);
-    } else {
-      finish();
-    }
-
+  if (progress.finished) {
+    finish();
     return;
   }
 
-  remaining = Math.ceil(msLeft / 1000);
+  remaining = Math.ceil(Math.max(0, phaseDeadline - now) / 1000);
+
+  if (idx !== previousIdx) {
+    lastBeepSecond = null;
+    const currentPhase = phases[idx];
+    beep(currentPhase.type === "work" ? 900 : 600, 0.1);
+  }
+
   render();
 
   if (

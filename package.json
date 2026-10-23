@@ -1,0 +1,10 @@
+{
+  "name": "apex-training-system",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "check": "node --check app.js && node --check timer-domain.js && node --check tests/timer-domain.test.js",
+    "test": "node --test"
+  }
+}
